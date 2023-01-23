@@ -1,5 +1,4 @@
-﻿using Mango.Services.ProductAPI.Models.Dto;
-using Mango.Services.ProductAPI.Models.DTO;
+﻿using Mango.Services.ProductAPI.Models.DTO;
 using Mango.Services.ProductAPI.Repository;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -88,6 +87,7 @@ namespace Mango.Services.ProductAPI.Controllers
         }
 
         [HttpDelete]
+        [Route("{id}")]
         public async Task<object> Delete(int id)
         {
             try

@@ -1,4 +1,4 @@
-﻿using Mango.Services.ProductAPI.Models.Dto;
+﻿using Mango.Services.ProductAPI.Models.DTO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;

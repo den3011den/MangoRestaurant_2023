@@ -1,5 +1,4 @@
-﻿using Mango.Services.ProductAPI.Models.Dto;
-using Mango.Web.Models;
+﻿using Mango.Web.Models;
 using Mango.Web.Services.IServices;
 using System.Collections;
 using System.Net.Http;
