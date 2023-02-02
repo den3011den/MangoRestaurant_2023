@@ -20,7 +20,7 @@ namespace Mango.Services.ProductAPI.Controllers
             this._response = new ResponseDTO();
         }
 
-        [Authorize]
+       
         [HttpGet]
         public async Task<object> Get()
         {
@@ -36,8 +36,7 @@ namespace Mango.Services.ProductAPI.Controllers
             }
             return _response;
         }
-
-        [Authorize]
+     
         [HttpGet]
         [Route("{id}")]
         public async Task<object> Get(int id)
@@ -90,6 +89,7 @@ namespace Mango.Services.ProductAPI.Controllers
         }
 
         [Authorize(Roles = "Admin")]
+       // [Authorize]
         [HttpDelete]
         [Route("{id}")]
         public async Task<object> Delete(int id)

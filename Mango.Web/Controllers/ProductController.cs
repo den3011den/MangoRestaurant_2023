@@ -92,7 +92,8 @@ namespace Mango.Web.Controllers
         }
 
 
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> ProductDelete(int productId)
         {
 
@@ -109,7 +110,8 @@ namespace Mango.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> ProductDelete(ProductDTO model)
         {
             if (ModelState.IsValid)
