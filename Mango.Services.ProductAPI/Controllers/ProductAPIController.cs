@@ -26,7 +26,7 @@ namespace Mango.Services.ProductAPI.Controllers
         {
             try
             {
-                IEnumerable<ProductDTO> productDTOs = await _productRepository.GetProducts();
+                IEnumerable<ProductDto> productDTOs = await _productRepository.GetProducts();
                 _response.Result = productDTOs;
             }
             catch(Exception ex)
@@ -43,7 +43,7 @@ namespace Mango.Services.ProductAPI.Controllers
         {
             try
             {
-                ProductDTO productDTO = await _productRepository.GetProductById(id);
+                ProductDto productDTO = await _productRepository.GetProductById(id);
                 _response.Result = productDTO;
             }
             catch (Exception ex)
@@ -56,11 +56,11 @@ namespace Mango.Services.ProductAPI.Controllers
 
         [Authorize]
         [HttpPost]        
-        public async Task<object> Post([FromBody] ProductDTO productDTO)
+        public async Task<object> Post([FromBody] ProductDto productDTO)
         {
             try
             {
-                ProductDTO model = await _productRepository.CreateUpdateProduct(productDTO);
+                ProductDto model = await _productRepository.CreateUpdateProduct(productDTO);
                 _response.Result = model;
             }
             catch (Exception ex)
@@ -73,11 +73,11 @@ namespace Mango.Services.ProductAPI.Controllers
 
         [Authorize]
         [HttpPut]
-        public async Task<object> Put([FromBody] ProductDTO productDTO)
+        public async Task<object> Put([FromBody] ProductDto productDTO)
         {
             try
             {
-                ProductDTO model = await _productRepository.CreateUpdateProduct(productDTO);
+                ProductDto model = await _productRepository.CreateUpdateProduct(productDTO);
                 _response.Result = model;
             }
             catch (Exception ex)

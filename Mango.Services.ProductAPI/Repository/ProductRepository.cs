@@ -20,9 +20,9 @@ namespace Mango.Services.ProductAPI.Repository
             _mapper = mapper;
         }
 
-        public async Task<ProductDTO> CreateUpdateProduct(ProductDTO productDto)
+        public async Task<ProductDto> CreateUpdateProduct(ProductDto productDto)
         {
-            Product product = _mapper.Map<ProductDTO, Product>(productDto);
+            Product product = _mapper.Map<ProductDto, Product>(productDto);
             if(product.ProductId > 0)
             {
                 _db.Products.Update(product);
@@ -33,7 +33,7 @@ namespace Mango.Services.ProductAPI.Repository
                 _db.Products.Add(product);
             }
             await _db.SaveChangesAsync();
-            return _mapper.Map<Product, ProductDTO>(product);
+            return _mapper.Map<Product, ProductDto>(product);
         }
 
         public async Task<bool> DeleteProduct(int productId)
@@ -55,16 +55,16 @@ namespace Mango.Services.ProductAPI.Repository
             }
         }
 
-        public async Task<ProductDTO> GetProductById(int productId)
+        public async Task<ProductDto> GetProductById(int productId)
         {
             Product product = await _db.Products.Where(x => x.ProductId == productId).FirstOrDefaultAsync();
-            return _mapper.Map<ProductDTO>(product);
+            return _mapper.Map<ProductDto>(product);
         }
 
-        public async Task<IEnumerable<ProductDTO>> GetProducts()
+        public async Task<IEnumerable<ProductDto>> GetProducts()
         {
             List<Product> productList = await _db.Products.ToListAsync();
-            return _mapper.Map<List<ProductDTO>>(productList);
+            return _mapper.Map<List<ProductDto>>(productList);
         }
     }
 }
