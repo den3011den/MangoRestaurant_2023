@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mango.Services.Identity", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mango.Services.ShoppingCartAPI", "Mango.Services.ShoppingCartAPI\Mango.Services.ShoppingCartAPI.csproj", "{1D55C452-5613-441F-A411-828C2E991A22}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mango.Services.CuponAPI", "Mango.Services.CuponAPI\Mango.Services.CuponAPI.csproj", "{25035C51-5E6E-4029-A183-986E5E06E895}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mango.Services.CouponAPI", "Mango.Services.CuponAPI\Mango.Services.CouponAPI.csproj", "{25035C51-5E6E-4029-A183-986E5E06E895}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
