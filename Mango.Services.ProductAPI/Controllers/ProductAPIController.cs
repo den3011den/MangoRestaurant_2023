@@ -26,8 +26,8 @@ namespace Mango.Services.ProductAPI.Controllers
         {
             try
             {
-                IEnumerable<ProductDto> productDTOs = await _productRepository.GetProducts();
-                _response.Result = productDTOs;
+                IEnumerable<ProductDto> productDtos = await _productRepository.GetProducts();
+                _response.Result = productDtos;
             }
             catch(Exception ex)
             {
@@ -43,8 +43,8 @@ namespace Mango.Services.ProductAPI.Controllers
         {
             try
             {
-                ProductDto productDTO = await _productRepository.GetProductById(id);
-                _response.Result = productDTO;
+                ProductDto productDto = await _productRepository.GetProductById(id);
+                _response.Result = productDto;
             }
             catch (Exception ex)
             {
@@ -56,11 +56,11 @@ namespace Mango.Services.ProductAPI.Controllers
 
         [Authorize]
         [HttpPost]        
-        public async Task<object> Post([FromBody] ProductDto productDTO)
+        public async Task<object> Post([FromBody] ProductDto productDto)
         {
             try
             {
-                ProductDto model = await _productRepository.CreateUpdateProduct(productDTO);
+                ProductDto model = await _productRepository.CreateUpdateProduct(productDto);
                 _response.Result = model;
             }
             catch (Exception ex)
@@ -73,11 +73,11 @@ namespace Mango.Services.ProductAPI.Controllers
 
         [Authorize]
         [HttpPut]
-        public async Task<object> Put([FromBody] ProductDto productDTO)
+        public async Task<object> Put([FromBody] ProductDto productDto)
         {
             try
             {
-                ProductDto model = await _productRepository.CreateUpdateProduct(productDTO);
+                ProductDto model = await _productRepository.CreateUpdateProduct(productDto);
                 _response.Result = model;
             }
             catch (Exception ex)

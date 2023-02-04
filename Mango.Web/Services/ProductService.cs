@@ -16,12 +16,12 @@ namespace Mango.Web.Services
             _clientFactory = clientFactory;
         }
 
-        public async Task<T> CreateProductAsync<T>(ProductDto productDTO, string token)
+        public async Task<T> CreateProductAsync<T>(ProductDto productDto, string token)
         {
             return await this.SendAsync<T>(new ApiRequest()
             {
                 ApiType = SD.ApiType.POST,
-                Data= productDTO,
+                Data= productDto,
                 ApiUrl = SD.ProductAPIBase + "/api/products",
                 AccessToken = token
             });
@@ -57,12 +57,12 @@ namespace Mango.Web.Services
             });
         }
 
-        public async Task<T> UpdateProductAsync<T>(ProductDto productDTO, string token)
+        public async Task<T> UpdateProductAsync<T>(ProductDto productDto, string token)
         {
             return await this.SendAsync<T>(new ApiRequest()
             {
                 ApiType = SD.ApiType.PUT,
-                Data = productDTO,
+                Data = productDto,
                 ApiUrl = SD.ProductAPIBase + "/api/products",
                 AccessToken = token
             });
