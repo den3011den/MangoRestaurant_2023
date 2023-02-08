@@ -1,4 +1,5 @@
 using AutoMapper;
+using Mango.MessageBus;
 using Mango.Services.ShoppingCartAPI.DbContexts;
 using Mango.Services.ShoppingCartAPI.Repository;
 using Microsoft.AspNetCore.Builder;
@@ -39,6 +40,10 @@ namespace Mango.Services.ShoppingCartAPI
             services.AddSingleton(mapper);
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddScoped<ICartRepository, CartRepository>();
+
+            // на самом деле Yandex
+            services.AddSingleton<IMessageBus, AzureServiceBusMessageBus>();
+
             services.AddControllers();
 
             services.AddAuthentication("Bearer")

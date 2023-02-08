@@ -1,4 +1,5 @@
-﻿using Mango.Services.ShoppingCartAPI.Messages;
+﻿using Mango.MessageBus;
+using Mango.Services.ShoppingCartAPI.Messages;
 using Mango.Services.ShoppingCartAPI.Models.Dto;
 using Mango.Services.ShoppingCartAPI.Repository;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,13 @@ namespace Mango.Services.ShoppingCartAPI.Controllers
     {
         private readonly ICartRepository _cartRepository;
         protected ResponseDTO _response;
+        private readonly IMessageBus _messageBus;
 
-        public CartAPIController(ICartRepository cartRepository)
+        public CartAPIController(ICartRepository cartRepository, IMessageBus messageBus)
         {
             _cartRepository = cartRepository;
             this._response = new ResponseDTO();
+            this._messageBus = messageBus;
         }
 
         [HttpGet("GetCart/{userId}")]
@@ -143,6 +146,7 @@ namespace Mango.Services.ShoppingCartAPI.Controllers
                 }
                 checkoutHeaderDto.CartDetails = cartDto.CartDetails;
                 // logic to add message to process order.
+                await _messageBus.PublishMessage(checkoutHeaderDto, "checkoutMessageTopic", "mangoOrderProducer", "Admin123*");
 
             }
             catch (Exception ex)
