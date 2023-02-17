@@ -15,11 +15,13 @@ namespace Mango.Services.ShoppingCartAPI.Controllers
     public class CartAPIController : Controller
     {
         private readonly ICartRepository _cartRepository;
+        private readonly ICouponRepository _couponRepository;
         protected ResponseDTO _response;
         private readonly IMessageBus _messageBus;
 
-        public CartAPIController(ICartRepository cartRepository, IMessageBus messageBus)
+        public CartAPIController(ICartRepository cartRepository, IMessageBus messageBus, ICouponRepository couponRepository)
         {
+            _couponRepository = couponRepository;
             _cartRepository = cartRepository;
             this._response = new ResponseDTO();
             this._messageBus = messageBus;
@@ -144,6 +146,20 @@ namespace Mango.Services.ShoppingCartAPI.Controllers
                 {
                     return BadRequest();
                 }
+
+                if(!string.IsNullOrEmpty(checkoutHeaderDto.CouponCode))
+                {
+                    CouponDto coupon = await _couponRepository.GetCoupon(checkoutHeaderDto.CouponCode);
+                    if(checkoutHeaderDto.DiscountTotal!=coupon.DiscountAmount)
+                    {
+                        _response.IsSuccess = false;
+                        _response.ErrorMessages = new List<string>() { "Скидка по купону изменилась. Подтвердите, если желаете продолжить" };
+                        _response.DisplayMessage = "Скидка по купону изменилась. Подтвердите, если желаете продолжить";
+                        return _response;
+                    }
+                }
+
+
                 checkoutHeaderDto.CartDetails = cartDto.CartDetails;
                 // logic to add message to process order.
                 await _messageBus.PublishMessage(checkoutHeaderDto, "checkoutMessageTopic", "mangoOrderProducer", "Admin123*");
