@@ -20,6 +20,8 @@ namespace Mango.Services.OrderAPI.Messaging
         private readonly string subscriptionCheckOut;
         private readonly string checkoutMessageTopic;
         private readonly string orderPaymentProcessTopic;
+        private readonly string mangoOrderSubscriptionForOrderPayment;
+        private readonly string orderUpdatePaymentResultTopic;
 
         private readonly OrderRepository _orderRepository;
         private readonly IMessageBus _messageBus;
@@ -33,9 +35,12 @@ namespace Mango.Services.OrderAPI.Messaging
 
         private readonly string HOST;
         private readonly string TOPIC;
+        private readonly string TOPIC_FORPAYMENT;
 
         private ConsumerConfig consumerConfig;
+        private ConsumerConfig consumerConfig_ForPayment;
         private IConsumer<string, string> client;
+        private IConsumer<string, string> client_ForPayment;
 
         //    ConsumerConfig consumerConfig;
 
@@ -51,10 +56,13 @@ namespace Mango.Services.OrderAPI.Messaging
             subscriptionCheckOut = _configuration.GetValue<string>("SubscriptionCheckOut");
             checkoutMessageTopic = _configuration.GetValue<string>("CheckoutMessageTopic");
             orderPaymentProcessTopic = _configuration.GetValue<string>("OrderPaymentProcessTopic");
+            mangoOrderSubscriptionForOrderPayment = _configuration.GetValue<string>("MangoOrderSubscriptionForOrderPayment");
+            orderUpdatePaymentResultTopic = _configuration.GetValue<string>("OrderUpdatePaymentResultTopic"); 
 
             HOST = serviceBusConnectionString;
             TOPIC = checkoutMessageTopic;
 
+            TOPIC_FORPAYMENT = orderUpdatePaymentResultTopic;
 
             consumerConfig = new ConsumerConfig(
                    new Dictionary<string, string>{
@@ -63,6 +71,17 @@ namespace Mango.Services.OrderAPI.Messaging
                     {"ssl.ca.location", CA_FILE},
                     {"sasl.mechanisms", "SCRAM-SHA-512"},
                     {"sasl.username", subscriptionCheckOut},
+                    {"sasl.password", "Admin123*"},
+                    {"group.id", "demo"}
+                    });
+
+            consumerConfig_ForPayment = new ConsumerConfig(
+                   new Dictionary<string, string>{
+                    {"bootstrap.servers", HOST},
+                    {"security.protocol", "SASL_SSL"},
+                    {"ssl.ca.location", CA_FILE},
+                    {"sasl.mechanisms", "SCRAM-SHA-512"},
+                    {"sasl.username", mangoOrderSubscriptionForOrderPayment},
                     {"sasl.password", "Admin123*"},
                     {"group.id", "demo"}
                     });
@@ -106,6 +125,38 @@ namespace Mango.Services.OrderAPI.Messaging
                 {
                                       
                 }
+
+
+                try
+                {
+
+                    var kkk = 3;
+
+                    client_ForPayment = new ConsumerBuilder<string, string>(consumerConfig).Build();
+                    client_ForPayment.Subscribe(TOPIC_FORPAYMENT);
+                    var cr_ForPayment = client_ForPayment.Consume();
+                    //Console.WriteLine($"{cr.Message.Key}:{cr.Message.Value}");
+
+                    if (cr_ForPayment != null)
+                    {
+                        Console.WriteLine("OrderAPI: I have read this: ");
+                        Console.WriteLine(cr_ForPayment.Value.ToString());
+
+                        await OnOrderPaymentUpdateReceived(cr_ForPayment.Value.ToString());
+                    }
+
+                    await Stop();
+                }
+                catch (Exception eex)
+                {
+                    Console.WriteLine("ERROR: " + eex.Message);
+                }
+                finally
+                {
+
+                }
+
+
             }
         }
 
@@ -115,6 +166,11 @@ namespace Mango.Services.OrderAPI.Messaging
             { 
                 client.Close();
                 client.Dispose();
+            }
+            if (client_ForPayment != null)
+            {
+                client_ForPayment.Close();
+                client_ForPayment.Dispose();
             }
         }
 
@@ -179,6 +235,15 @@ namespace Mango.Services.OrderAPI.Messaging
                 throw;
             }
 
+        }
+
+        private async Task OnOrderPaymentUpdateReceived(string message)
+        {
+            var body = message;
+
+            UpdatePaymentResultMessage paymentResultMessage = JsonConvert.DeserializeObject<UpdatePaymentResultMessage>(body);
+
+            await _orderRepository.UpdateOrderPaymentStatus(paymentResultMessage.OrderId, paymentResultMessage.Status);
         }
 
     }
