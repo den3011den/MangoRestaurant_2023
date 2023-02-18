@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Hosting;
 using static Confluent.Kafka.ConfigPropertyNames;
+using Mango.MessageBus;
+using Mango.Services.OrderAPI.Messages;
 
 namespace Mango.Services.OrderAPI.Messaging
 {
@@ -17,7 +19,10 @@ namespace Mango.Services.OrderAPI.Messaging
         private readonly string serviceBusConnectionString;
         private readonly string subscriptionCheckOut;
         private readonly string checkoutMessageTopic;
+        private readonly string orderPaymentProcessTopic;
+
         private readonly OrderRepository _orderRepository;
+        private readonly IMessageBus _messageBus;
 
         private readonly IConfiguration _configuration;
 
@@ -36,14 +41,16 @@ namespace Mango.Services.OrderAPI.Messaging
 
         //   IConsumer<string, string> client;
 
-        public AzureServiceBusConsumer(OrderRepository orderRepository, IConfiguration configuration)
+        public AzureServiceBusConsumer(OrderRepository orderRepository, IConfiguration configuration, IMessageBus messageBus)
         {
             _orderRepository = orderRepository;
             _configuration = configuration;
+            _messageBus = messageBus;
 
             serviceBusConnectionString = _configuration.GetValue<string>("ServiceBusConnectionString");
             subscriptionCheckOut = _configuration.GetValue<string>("SubscriptionCheckOut");
             checkoutMessageTopic = _configuration.GetValue<string>("CheckoutMessageTopic");
+            orderPaymentProcessTopic = _configuration.GetValue<string>("OrderPaymentProcessTopic");
 
             HOST = serviceBusConnectionString;
             TOPIC = checkoutMessageTopic;
@@ -152,6 +159,26 @@ namespace Mango.Services.OrderAPI.Messaging
             }
 
             await _orderRepository.AddOrder(orderHeader);
+
+            PaymentRequestMessage paymentRequestMessage = new()
+            {
+                Name = orderHeader.FirstName + " " + orderHeader.LastName,
+                CardNumber = orderHeader.CardNumber,
+                CVV = orderHeader.CVV,
+                ExpiryMonthYear = orderHeader.ExpiryMonthYear,
+                OrderId = orderHeader.OrderHeaderId,
+                OrderTotal = orderHeader.OrderTotal
+            };
+
+            try
+            {
+                await _messageBus.PublishMessage(paymentRequestMessage, orderPaymentProcessTopic, "mangoOrderProducer", "Admin123*");                
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
         }
 
     }
