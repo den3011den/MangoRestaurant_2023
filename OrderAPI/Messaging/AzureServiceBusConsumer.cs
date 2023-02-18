@@ -19,7 +19,7 @@ namespace Mango.Services.OrderAPI.Messaging
         private readonly string checkoutMessageTopic;
         private readonly OrderRepository _orderRepository;
 
-       private readonly IConfiguration _configuration;
+        private readonly IConfiguration _configuration;
 
         private string CA_FILE = (Environment.OSVersion.Platform == PlatformID.Unix ||
                   Environment.OSVersion.Platform == PlatformID.MacOSX)
@@ -29,9 +29,12 @@ namespace Mango.Services.OrderAPI.Messaging
         private readonly string HOST;
         private readonly string TOPIC;
 
-    //    ConsumerConfig consumerConfig;
+        private ConsumerConfig consumerConfig;
+        private IConsumer<string, string> client;
 
-     //   IConsumer<string, string> client;
+        //    ConsumerConfig consumerConfig;
+
+        //   IConsumer<string, string> client;
 
         public AzureServiceBusConsumer(OrderRepository orderRepository, IConfiguration configuration)
         {
@@ -46,16 +49,8 @@ namespace Mango.Services.OrderAPI.Messaging
             TOPIC = checkoutMessageTopic;
 
 
-
-        }
-
-
-        public async Task Start()
-        {
-
-
-            var consumerConfig = new ConsumerConfig(
-               new Dictionary<string, string>{
+            consumerConfig = new ConsumerConfig(
+                   new Dictionary<string, string>{
                     {"bootstrap.servers", HOST},
                     {"security.protocol", "SASL_SSL"},
                     {"ssl.ca.location", CA_FILE},
@@ -63,23 +58,38 @@ namespace Mango.Services.OrderAPI.Messaging
                     {"sasl.username", subscriptionCheckOut},
                     {"sasl.password", "Admin123*"},
                     {"group.id", "demo"}
-               }
-           );
+                    });
 
-            var client = new ConsumerBuilder<string, string>(consumerConfig).Build();
-            client.Subscribe(TOPIC);
+            //client = new ConsumerBuilder<string, string>(consumerConfig).Build();
+            //client.Subscribe(TOPIC);
 
-          //  while (true)
-          //  {
+        }
+
+
+        public async Task Start()
+        {
+
+            while (true)
+            {
                 try
                 {
 
                     var hhh = 3;
+
+                    client = new ConsumerBuilder<string, string>(consumerConfig).Build();
+                    client.Subscribe(TOPIC);
                     var cr = client.Consume();
                     //Console.WriteLine($"{cr.Message.Key}:{cr.Message.Value}");
                     
+                    if (cr != null) 
+                    {
+                        Console.WriteLine("OrderAPI: I have read this: ");
+                        Console.WriteLine(cr.Value.ToString());
 
-                    await OnCheckOutMessageReceived(cr.Value.ToString());
+                        await OnCheckOutMessageReceived(cr.Value.ToString());
+                    }
+
+                    await Stop();
                 }
                 catch (Exception eex)
                 {
@@ -89,13 +99,16 @@ namespace Mango.Services.OrderAPI.Messaging
                 {
                                       
                 }
-            //}
+            }
         }
 
         public async Task Stop()
         {
-            //Close();
-            //Dispose();
+            if (client!=null)
+            { 
+                client.Close();
+                client.Dispose();
+            }
         }
 
         private async Task OnCheckOutMessageReceived(string message)
