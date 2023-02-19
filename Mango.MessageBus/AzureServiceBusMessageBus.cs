@@ -26,7 +26,7 @@ namespace Mango.MessageBus
         {
 
 
-            var producerConfig = new ProducerConfig(
+            var producerConfig22 = new ProducerConfig(
                         new Dictionary<string, string>{
                         {"bootstrap.servers", HOST},
                         {"security.protocol", "SASL_SSL"},
@@ -39,7 +39,7 @@ namespace Mango.MessageBus
             var jsonMessage = JsonConvert.SerializeObject(message);
             var finalMessage = jsonMessage; //Encoding.UTF8.GetBytes(jsonMessage);
 
-            var producer = new ProducerBuilder<string, string>(producerConfig).Build();
+            var producer = new ProducerBuilder<string, string>(producerConfig22).Build();
 
             await producer.ProduceAsync(topicName, new Message<string, string> { Key = Guid.NewGuid().ToString(), Value = finalMessage }
                     //,
@@ -57,6 +57,7 @@ namespace Mango.MessageBus
 
                     );
             producer.Flush(TimeSpan.FromSeconds(10));
+            //producer.Dispose();            
             //producer.Dispose();
 
         }

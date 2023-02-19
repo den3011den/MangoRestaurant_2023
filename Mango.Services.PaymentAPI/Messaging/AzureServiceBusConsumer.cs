@@ -15,11 +15,19 @@ namespace Mango.Services.PaymentAPI.Messaging
 {
     public class AzureServiceBusConsumer :IAzureServiceBusConsumer
     {
-        private readonly string serviceBusConnectionString;
-        private readonly string subscriptionPayment;        
-        private readonly string orderPaymentProcessTopic;
-        private readonly string orderUpdatePaymentResultTopic;
+        //private readonly string serviceBusConnectionString;
+        //private readonly string subscriptionPayment;        
+        //private readonly string orderPaymentProcessTopic;
+        //private readonly string orderUpdatePaymentResultTopic;
         private readonly IProcessPayment _processPayment;
+
+
+        private readonly string yandexKafkaHost;
+        private readonly string oprderPaymentProcessTopic;
+        private readonly string orderPaymentProcessTopicConsumerUser;
+        private readonly string producerUser;
+        private readonly string orderUpdatePaymentResultTopic;
+        private readonly string allUsersPassword = "Admin123*";
 
         private readonly IMessageBus _messageBus;
 
@@ -30,8 +38,6 @@ namespace Mango.Services.PaymentAPI.Messaging
                   ? Environment.GetEnvironmentVariable("HOME")
                   : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%") + "\\.kafka\\YandexCA.crt";
 
-        private readonly string HOST;
-        private readonly string TOPIC;
 
         private ConsumerConfig consumerConfig;
         private IConsumer<string, string> client;
@@ -46,23 +52,29 @@ namespace Mango.Services.PaymentAPI.Messaging
             _messageBus = messageBus;
             _processPayment = processPayment;
 
-            serviceBusConnectionString = _configuration.GetValue<string>("ServiceBusConnectionString");
-            subscriptionPayment = _configuration.GetValue<string>("OrderPaymentProcessSubscription");             
-            orderUpdatePaymentResultTopic = _configuration.GetValue<string>("OrderUpdatePaymentResultTopic");
-            orderPaymentProcessTopic = _configuration.GetValue<string>("OrderPaymentProcessTopic");
+            //serviceBusConnectionString = _configuration.GetValue<string>("ServiceBusConnectionString");
+            //subscriptionPayment = _configuration.GetValue<string>("OrderPaymentProcessSubscription");             
+            //orderUpdatePaymentResultTopic = _configuration.GetValue<string>("OrderUpdatePaymentResultTopic");
+            //orderPaymentProcessTopic = _configuration.GetValue<string>("OrderPaymentProcessTopic");
 
-            HOST = serviceBusConnectionString;
-            TOPIC = orderPaymentProcessTopic;
+            //HOST = serviceBusConnectionString;
+            //TOPIC = orderPaymentProcessTopic;
+
+            yandexKafkaHost = _configuration.GetValue<string>("YandexKafkaHost");
+            oprderPaymentProcessTopic = _configuration.GetValue<string>("OrderPaymentProcessTopic");
+            orderPaymentProcessTopicConsumerUser = _configuration.GetValue<string>("OrderPaymentProcessTopicConsumerUser");
+            producerUser = _configuration.GetValue<string>("ProducerUser");
+            orderUpdatePaymentResultTopic = _configuration.GetValue<string>("OrderUpdatePaymentResultTopic");
 
 
             consumerConfig = new ConsumerConfig(
                    new Dictionary<string, string>{
-                    {"bootstrap.servers", HOST},
+                    {"bootstrap.servers", yandexKafkaHost},
                     {"security.protocol", "SASL_SSL"},
                     {"ssl.ca.location", CA_FILE},
                     {"sasl.mechanisms", "SCRAM-SHA-512"},
-                    {"sasl.username", subscriptionPayment},
-                    {"sasl.password", "Admin123*"},
+                    {"sasl.username", orderPaymentProcessTopicConsumerUser},
+                    {"sasl.password", allUsersPassword},
                     {"group.id", "demo"}
                     });
 
@@ -83,10 +95,10 @@ namespace Mango.Services.PaymentAPI.Messaging
                     var hhh = 3;
 
                     client = new ConsumerBuilder<string, string>(consumerConfig).Build();
-                    client.Subscribe(TOPIC);
-                    var cr = client.Consume();
+                    client.Subscribe(oprderPaymentProcessTopic);
+                    var cr = client.Consume(new TimeSpan(0, 0, 0, 5));
                     //Console.WriteLine($"{cr.Message.Key}:{cr.Message.Value}");
-                    
+
                     if (cr != null) 
                     {
                         Console.WriteLine("PaymentAPI: I have read this: ");
@@ -95,7 +107,7 @@ namespace Mango.Services.PaymentAPI.Messaging
                         await ProcessPayments(cr.Value.ToString());
                     }
 
-                    await Stop();
+                    //await Stop();
                 }
                 catch (Exception eex)
                 {
@@ -136,7 +148,7 @@ namespace Mango.Services.PaymentAPI.Messaging
 
             try
             {
-                await _messageBus.PublishMessage(updatePaymentResultMessage, orderUpdatePaymentResultTopic, "mangoOrderProducer", "Admin123*");                
+                await _messageBus.PublishMessage(updatePaymentResultMessage, orderUpdatePaymentResultTopic, producerUser, allUsersPassword);
             }
             catch (Exception ex)
             {

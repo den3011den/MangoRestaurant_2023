@@ -16,12 +16,16 @@ namespace Mango.Services.OrderAPI.Messaging
 {
     public class AzureServiceBusConsumer :IAzureServiceBusConsumer
     {
-        private readonly string serviceBusConnectionString;
-        private readonly string subscriptionCheckOut;
+
+        private readonly string yandexKafkaHost;
         private readonly string checkoutMessageTopic;
+        private readonly string checkoutMessageTopicConsumerUser;
         private readonly string orderPaymentProcessTopic;
-        private readonly string mangoOrderSubscriptionForOrderPayment;
+        private readonly string orderPaymentProcessTopicConsumerUser;
+        private readonly string producerUser;        
         private readonly string orderUpdatePaymentResultTopic;
+        private readonly string orderUpdatePaymentResultTopicConsumerUser;
+        private readonly string allUsersPassword = "Admin123*";
 
         private readonly OrderRepository _orderRepository;
         private readonly IMessageBus _messageBus;
@@ -32,10 +36,6 @@ namespace Mango.Services.OrderAPI.Messaging
                   Environment.OSVersion.Platform == PlatformID.MacOSX)
                   ? Environment.GetEnvironmentVariable("HOME")
                   : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%") + "\\.kafka\\YandexCA.crt";
-
-        private readonly string HOST;
-        private readonly string TOPIC;
-        private readonly string TOPIC_FORPAYMENT;
 
         private ConsumerConfig consumerConfig;
         private ConsumerConfig consumerConfig_ForPayment;
@@ -52,37 +52,36 @@ namespace Mango.Services.OrderAPI.Messaging
             _configuration = configuration;
             _messageBus = messageBus;
 
-            serviceBusConnectionString = _configuration.GetValue<string>("ServiceBusConnectionString");
-            subscriptionCheckOut = _configuration.GetValue<string>("SubscriptionCheckOut");
+            yandexKafkaHost = _configuration.GetValue<string>("YandexKafkaHost");
             checkoutMessageTopic = _configuration.GetValue<string>("CheckoutMessageTopic");
+            checkoutMessageTopicConsumerUser = _configuration.GetValue<string>("CheckoutMessageTopicConsumerUser");
             orderPaymentProcessTopic = _configuration.GetValue<string>("OrderPaymentProcessTopic");
-            mangoOrderSubscriptionForOrderPayment = _configuration.GetValue<string>("MangoOrderSubscriptionForOrderPayment");
-            orderUpdatePaymentResultTopic = _configuration.GetValue<string>("OrderUpdatePaymentResultTopic"); 
+            orderPaymentProcessTopicConsumerUser = _configuration.GetValue<string>("OrderPaymentProcessTopicConsumerUser");
+            producerUser = _configuration.GetValue<string>("ProducerUser");            
+            orderUpdatePaymentResultTopic = _configuration.GetValue<string>("OrderUpdatePaymentResultTopic");
+            orderUpdatePaymentResultTopicConsumerUser = _configuration.GetValue<string>("OrderUpdatePaymentResultTopicConsumerUser");
 
-            HOST = serviceBusConnectionString;
-            TOPIC = checkoutMessageTopic;
 
-            TOPIC_FORPAYMENT = orderUpdatePaymentResultTopic;
 
             consumerConfig = new ConsumerConfig(
                    new Dictionary<string, string>{
-                    {"bootstrap.servers", HOST},
+                    {"bootstrap.servers", yandexKafkaHost},
                     {"security.protocol", "SASL_SSL"},
                     {"ssl.ca.location", CA_FILE},
                     {"sasl.mechanisms", "SCRAM-SHA-512"},
-                    {"sasl.username", subscriptionCheckOut},
-                    {"sasl.password", "Admin123*"},
+                    {"sasl.username", checkoutMessageTopicConsumerUser},
+                    {"sasl.password", allUsersPassword},
                     {"group.id", "demo"}
                     });
 
             consumerConfig_ForPayment = new ConsumerConfig(
                    new Dictionary<string, string>{
-                    {"bootstrap.servers", HOST},
+                    {"bootstrap.servers", yandexKafkaHost},
                     {"security.protocol", "SASL_SSL"},
                     {"ssl.ca.location", CA_FILE},
                     {"sasl.mechanisms", "SCRAM-SHA-512"},
-                    {"sasl.username", mangoOrderSubscriptionForOrderPayment},
-                    {"sasl.password", "Admin123*"},
+                    {"sasl.username", orderUpdatePaymentResultTopicConsumerUser},
+                    {"sasl.password", allUsersPassword},
                     {"group.id", "demo"}
                     });
 
@@ -100,13 +99,16 @@ namespace Mango.Services.OrderAPI.Messaging
                 try
                 {
 
+                    //await Task.Delay(3000);
+
                     var hhh = 3;
 
                     client = new ConsumerBuilder<string, string>(consumerConfig).Build();
-                    client.Subscribe(TOPIC);
-                    var cr = client.Consume();
+                    client.Subscribe(checkoutMessageTopic);
+                    //var cr = client.Consume(new TimeSpan(0, 0, 0, 5));
+                    var cr = client.Consume(TimeSpan.FromSeconds(5));                    
                     //Console.WriteLine($"{cr.Message.Key}:{cr.Message.Value}");
-                    
+
                     if (cr != null) 
                     {
                         Console.WriteLine("OrderAPI: I have read this: ");
@@ -115,7 +117,7 @@ namespace Mango.Services.OrderAPI.Messaging
                         await OnCheckOutMessageReceived(cr.Value.ToString());
                     }
 
-                    await Stop();
+                    //await Stop();
                 }
                 catch (Exception eex)
                 {
@@ -132,9 +134,10 @@ namespace Mango.Services.OrderAPI.Messaging
 
                     var kkk = 3;
 
-                    client_ForPayment = new ConsumerBuilder<string, string>(consumerConfig).Build();
-                    client_ForPayment.Subscribe(TOPIC_FORPAYMENT);
-                    var cr_ForPayment = client_ForPayment.Consume();
+                    client_ForPayment = new ConsumerBuilder<string, string>(consumerConfig_ForPayment).Build();
+                    client_ForPayment.Subscribe(orderUpdatePaymentResultTopic);
+                    //var cr_ForPayment = client_ForPayment.Consume(new TimeSpan(0, 0, 0, 5));
+                    var cr_ForPayment = client_ForPayment.Consume(TimeSpan.FromSeconds(5));
                     //Console.WriteLine($"{cr.Message.Key}:{cr.Message.Value}");
 
                     if (cr_ForPayment != null)
@@ -145,7 +148,7 @@ namespace Mango.Services.OrderAPI.Messaging
                         await OnOrderPaymentUpdateReceived(cr_ForPayment.Value.ToString());
                     }
 
-                    await Stop();
+                    //await Stop();
                 }
                 catch (Exception eex)
                 {
@@ -228,7 +231,7 @@ namespace Mango.Services.OrderAPI.Messaging
 
             try
             {
-                await _messageBus.PublishMessage(paymentRequestMessage, orderPaymentProcessTopic, "mangoOrderProducer", "Admin123*");                
+                await _messageBus.PublishMessage(paymentRequestMessage, orderPaymentProcessTopic, producerUser, allUsersPassword);
             }
             catch (Exception ex)
             {
